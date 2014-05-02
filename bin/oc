@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+require "pathname"
+require "netrc"
+require "colorize"
+require "terminal-table"
+
+bin_file = Pathname.new(__FILE__).realpath
+$:.unshift File.expand_path("../../lib", bin_file)
+
+config = Netrc.read("oc.netrc")
+
+if config["api.digitalocean.com"].nil?
+  client_id = [(print 'Digital Ocean Client ID: '), STDIN.gets.rstrip][1]
+  api_key = [(print 'Digital Ocean API Key: '), STDIN.gets.rstrip][1]
+  config["api.digitalocean.com"] = client_id, api_key
+  config.save
+else
+  require 'oc'
+  Oc::Runner.start
+end
