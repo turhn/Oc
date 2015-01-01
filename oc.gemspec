@@ -6,8 +6,8 @@ require 'oc/version'
 Gem::Specification.new do |spec|
   spec.name          = "oc"
   spec.version       = Oc::VERSION
-  spec.authors       = ["Sedat ÇİFTÇİ"]
-  spec.email         = ["iamcodegrab@gmail.com"]
+  spec.authors       = ["Sedat Ciftci"]
+  spec.email         = ["me@sedat.us"]
   spec.summary       = %q{DigitalOcean Command Line Tools}
   spec.description   = %q{DigitalOcean Command Line Tools}
   spec.homepage      = ""

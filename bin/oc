@@ -10,7 +10,7 @@ bin_file = Pathname.new(__FILE__).realpath
 
 $:.unshift File.expand_path("../../lib", bin_file)
 
-config = Netrc.read("#{(ENV["HOME"] || "./")}/digitalocean.netrc")
+config = Netrc.read("#{(ENV["HOME"] || "./")}/oc.netrc")
 
 if config["api.digitalocean.com"].nil?
   client_id = [(print 'Digital Ocean Client ID: '), STDIN.gets.rstrip][1]
