@@ -8,8 +8,8 @@ module Oc::Run
     description "This method lists all the available public SSH keys in your account that can be added to a droplet."
     syntax "oc ssh keys"
     def keys
-      result = Oc::Get.get_json("ssh_keys")
-      if result["status"] == "ERROR"
+      result = barge.key.all
+      if !result.success?
         puts "Error: Please check your information".red
       else
         puts "Your SSH Keys".yellow
@@ -20,7 +20,7 @@ module Oc::Run
           'Name'
         ]
 
-        result["ssh_keys"].each do |key|
+        result.ssh_keys.each do |key|
           rows << [
             key["id"],
             key["name"].red,
@@ -36,16 +36,18 @@ module Oc::Run
 
     def add(*args)
       name = args[0]
-      email = args[1]
-      pub_key = args[2]
+      pub_key = args[1]
       if name.nil? or pub_key.nil?
         puts "Argument Error".red
         puts "Usage".yellow
-        puts "$ oc ssh add [KEY_NAME] [KEY_EMAIL] [KEY_PUB]".yellow
+        puts "$ oc ssh add [KEY_NAME] [KEY_PUB]".yellow
       else
-        result = Oc::Get.get_json_parameter("ssh_keys","new",{"name" => name, "ssh_pub_key" => "ssh-rsa " + pub_key + " #{email}"})
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.key.create({
+          :name => name,
+          :public_key => pub_key
+          })
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "SSH Key Added".green
         end
@@ -62,23 +64,22 @@ module Oc::Run
         puts "$ oc ssh show [KEY_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        result = Oc::Get.get_json_parameter("ssh_keys",id)
-        if result["status"] == "ERROR"
-          puts "#{result["error_message"]}".red
+        result = barge.key.show(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "SSH Keys".yellow
           rows = []
 
           rows << [
             'ID',
-            'Name',
-            'SSH Pub Key'
+            'Name'
           ]
 
+          key = result.ssh_key
           rows << [
-            result["ssh_key"]["id"],
-            result["ssh_key"]["name"].red,
-            result["ssh_key"]["ssh_pub_key"].red
+            key.id,
+            key.name.to_s.red
           ]
 
           table = Terminal::Table.new :rows => rows
@@ -89,24 +90,25 @@ module Oc::Run
     end
 
     description "This method allows you to modify an existing public SSH key in your account."
-    syntax "oc ssh edit [KEY_ID] [KEY_NAME] [KEY_EMAIL] [KEY_PUB]"
+    syntax "oc ssh edit [KEY_ID] [KEY_NAME] [KEY_PUB]"
 
-    def edit(*args)
+    def update(*args)
       id = args[0]
       name = args[1]
-      email = args[2]
-      pub_key = args[3]
+      pub_key = args[2]
 
-      if id.nil? or name.nil? or email.nil? or pub_key.nil?
+      if id.nil? or name.nil? or pub_key.nil?
         puts "Argument Error".red
         puts "Usage".yellow
-        puts "$ oc ssh edit [KEY_ID] [KEY_NAME] [KEY_EMAIL] [KEY_PUB]".yellow
+        puts "$ oc ssh edit [KEY_ID] [KEY_NAME] [KEY_PUB]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/ssh_keys/#{id}/edit/"
-        result = Oc::Get.get_json_url(url,{"name" => name, "ssh_pub_key" => "ssh-rsa " + pub_key + " #{email}"})
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.key.update(id, {
+          :name => name,
+          :public_key => pub_key
+          })
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "SSH Key Edited".green
         end
@@ -124,10 +126,9 @@ module Oc::Run
         puts "$ oc ssh destroy [KEY_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/ssh_keys/#{id}/destroy/"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.key.destroy(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "SSH Key Deleted".green
         end
@@ -139,7 +140,11 @@ module Oc::Run
       @config ||=value
     end
 
-    private
+    def barge
+      puts "I'm thinking, please wait..".blue
+      Oc::Get.get_barge
+    end
+
     def new_key_request name, pub_key
 
     end

@@ -4,9 +4,8 @@ module Oc::Run
       description "This method returns all the available sizes that can be used to create a droplet."
       syntax "oc sizes"
       def run
-        url = "https://api.digitalocean.com/sizes"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
+        result = barge.size.all
+        if !result.success?
           puts "Error: #{result["error_message"]}".red
         else
           puts "Sizes".yellow
@@ -14,18 +13,30 @@ module Oc::Run
 
           rows << [
             'ID',
-            'Name'
+            'Memory',
+            'Disk',
+            'Cpu',
+            'Price (Monthly)',
+            'Price (Hourly)',
           ]
 
-          result["sizes"].each do |key|
+          result.sizes.each do |size|
             rows << [
-              key["id"],
-              key["name"].red,
+              size.slug,
+              size.memory.to_s + " MB",
+              size.disk.to_s + " GB",
+              size.vcpus,
+              "$ " + size.price_monthly.to_s,
+              "$ " + size.price_hourly.to_s
             ]
           end
           table = Terminal::Table.new :rows => rows
           puts table
         end
       end
+    def barge
+      puts "I'm thinking, please wait..".blue
+      Oc::Get.get_barge
+    end
   end
 end

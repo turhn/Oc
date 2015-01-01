@@ -63,13 +63,13 @@ Or install it yourself as:
   $ oc ssh keys
 
   Add SSH Key
-  $ oc ssh add [KEY_NAME] [KEY_EMAIL] [KEY_PUB]
+  $ oc ssh add [KEY_NAME] [KEY_PUB]
 
   Show SSH Key
   $ oc ssh show [KEY_ID]
 
   Edit SSH Key
-  $ oc ssh edit [KEY_ID] [KEY_NAME] [KEY_EMAIL] [KEY_PUB]
+  $ oc ssh edit [KEY_ID] [KEY_NAME] [KEY_PUB]
 
   Destroy SSH Key
   $ oc ssh destroy [KEY_ID]

@@ -8,8 +8,8 @@ module Oc::Run
     description "Show Droplets"
     syntax "oc show"
     def show
-      result = Oc::Get.get_json("droplets")
-      if result["status"] == "ERROR"
+      result = barge.droplet.all
+      if !result.success?
         puts "Error: Please check your information".red
       else
         puts "Your Droplets".yellow
@@ -19,19 +19,17 @@ module Oc::Run
           'ID',
           'Name',
           'IP Address',
-          'Private Ip Address',
           'Status',
           'Created At'
         ]
 
-        result["droplets"].each do |droplet|
+        result.droplets.each do |droplet|
           droplets << [
-            droplet["id"],
-            droplet["name"].red,
-            droplet["ip_address"].red,
-            droplet["private_ip_address"].nil? ? "Null".red : droplet["private_ip_address"],
-            droplet["status"] == "active" ? "Active".green : "Deactive".red,
-            droplet["created_at"]
+            droplet.id,
+            droplet.name.to_s.red,
+            droplet.ip_address.to_s.red,
+            droplet.status == "active" ? "Active".green : "Deactive".red,
+            droplet.created_at
           ]
         end
         table = Terminal::Table.new :rows => droplets
@@ -56,10 +54,9 @@ module Oc::Run
         raise ArgumentError, "Argument Error - #{size}" unless size =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
         raise ArgumentError, "Argument Error - #{image_id}" unless image_id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
 
-        url = "https://api.digitalocean.com/droplets/new"
-        result = Oc::Get.get_json_url(url,{"name" => name, "size_id" => size, "image_id" => image_id, "region_id" => region_id})
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.create({:name => name, :region => region_id, :size => size_id, :image => image_id})
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Droplet created".green
         end
@@ -77,10 +74,10 @@ module Oc::Run
         puts "$ oc droplets reboot [DROPLET_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/droplets/#{id}/reboot"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+
+        result = barge.droplet.reboot(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Droplet rebooted".green
         end
@@ -97,10 +94,9 @@ module Oc::Run
         puts "$ oc droplets cycle [DROPLET_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/droplets/#{id}/power_cycle"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.power_cycle(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Power cycle has been successful".green
         end
@@ -118,10 +114,9 @@ module Oc::Run
         puts "$ oc droplets down [DROPLET_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/droplets/#{id}/shutdown"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.shutdown(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Shut down has been successful".green
         end
@@ -139,10 +134,9 @@ module Oc::Run
         puts "$ oc droplets off [DROPLET_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/droplets/#{id}/power_off"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.power_off(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Power off has been successful".green
         end
@@ -160,10 +154,10 @@ module Oc::Run
         puts "$ oc droplets on [DROPLET_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/droplets/#{id}/power_on"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+
+        result = barge.droplet.power_on(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Power on has been successful".green
         end
@@ -182,10 +176,9 @@ module Oc::Run
         puts "$ oc droplets reset_password [DROPLET_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/droplets/#{id}/password_reset"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.password_reset(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Password restored. Please check your email".green
         end
@@ -205,10 +198,9 @@ module Oc::Run
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
         raise ArgumentError, "Argument Error - #{id}" unless size_id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/droplets/#{id}/resize/"
-        result = Oc::Get.get_json_url(url,{ "size" => size_id })
-        if result["status"] == "ERROR"
-          puts "#{result["error_message"]}".red
+        result = barge.droplet.resize(id, size: size_id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Droplet resized".green
         end
@@ -226,10 +218,9 @@ module Oc::Run
         puts "$ oc droplets snaphot [DROPLET_ID] [SNAPSHOT_NAME]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/droplets/#{id}/snapshot"
-        result = Oc::Get.get_json_url(url, {"name" => name})
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.snapshot(id, name: name)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Snapshot generated.".green
         end
@@ -250,10 +241,9 @@ module Oc::Run
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
         raise ArgumentError, "Argument Error - #{image_id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
 
-        url = "https://api.digitalocean.com/droplets/#{id}/restore"
-        result = Oc::Get.get_json_url(url, {"image_id" => image_id})
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.restore(id, image: image_id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Droplets restored.".green
         end
@@ -274,10 +264,9 @@ module Oc::Run
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
         raise ArgumentError, "Argument Error - #{image_id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
 
-        url = "https://api.digitalocean.com/droplets/#{id}/rebuild"
-        result = Oc::Get.get_json_url(url, {"image_id" => image_id})
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.rebuild(id, image: image_id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Droplets rebuilded.".green
         end
@@ -296,16 +285,19 @@ module Oc::Run
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
 
-        url = "https://api.digitalocean.com/droplets/#{id}/rename"
-        result = Oc::Get.get_json_url(url, {"name" => name})
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.droplet.rename(id, name: name)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Droplets renamed.".green
         end
       end
     end
 
+    def barge
+      puts "I'm thinking, please wait..".blue
+      Oc::Get.get_barge
+    end
 
     private
     def config(value)

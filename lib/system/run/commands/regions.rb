@@ -3,8 +3,8 @@ module Oc::Run
     description "This method will return all the available regions within the DigitalOcean cloud."
     syntax "oc regions"
     def run
-      result = Oc::Get.get_json("regions")
-      if result["status"] == "ERROR"
+      result = barge.region.all
+      if !result.success?
         puts "Error: Please check your information".red
       else
         puts "Regions".yellow
@@ -15,15 +15,19 @@ module Oc::Run
           'Name'
         ]
 
-        result["regions"].each do |droplet|
+        result.regions.each do |region|
           droplets << [
-            droplet["id"],
-            droplet["name"].red,
+            region.slug,
+            region.name.to_s.red,
           ]
         end
         table = Terminal::Table.new :rows => droplets
         puts table
       end
+    end
+    def barge
+      puts "I'm thinking, please wait..".blue
+      Oc::Get.get_barge
     end
   end
 end

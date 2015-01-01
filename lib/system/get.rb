@@ -1,5 +1,6 @@
 require "net/http"
 require "json"
+require "barge"
 module Oc
   class Get
     def self.get_json path,filter=nil
@@ -8,6 +9,10 @@ module Oc
       response = Net::HTTP.get_response(URI.parse(source))
       data = response.body
       result = JSON.parse(data)
+    end
+
+    def self.get_barge
+      barge = ::Barge::Client.new(access_token: Oc::Config.get(:api_key))
     end
 
 

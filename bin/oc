@@ -11,11 +11,10 @@ bin_file = Pathname.new(__FILE__).realpath
 $:.unshift File.expand_path("../../lib", bin_file)
 
 config = Netrc.read("#{(ENV["HOME"] || "./")}/oc.netrc")
-
 if config["api.digitalocean.com"].nil?
-  client_id = [(print 'Digital Ocean Client ID: '), STDIN.gets.rstrip][1]
-  api_key = [(print 'Digital Ocean API Key: '), STDIN.gets.rstrip][1]
-  config["api.digitalocean.com"] = client_id, api_key
+  api_key = [(print 'Access Tokens: '), STDIN.gets.rstrip][1]
+  client_id = "empty"
+  config["api.digitalocean.com"] = api_key, client_id
   config.save
 else
   require 'oc'

@@ -1,11 +1,10 @@
 module Oc
   class Config
     def self.get(key)
-      config = Netrc.read("#{(ENV["HOME"] || "./")}/digitalocean.netrc")
+      config = Netrc.read("#{(ENV["HOME"] || "./")}/oc.netrc")
       config = config["api.digitalocean.com"]
       options = {
-        :client_id => config[0],
-        :api_key => config[1]
+        :api_key => config[0]
       }
       return options[:"#{key}"]
     end

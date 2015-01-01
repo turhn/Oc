@@ -3,19 +3,18 @@ module Oc::Run
 
     description "Show your API information"
     def show
-      puts "Client ID: #{Oc::Config.get("client_id")}".yellow
-      puts "API Key: #{Oc::Config.get("api_key")}".yellow
+      puts "Access Tokens: #{Oc::Config.get("api_key")}".yellow
     end
 
     description "Change your API information"
     def change(*args)
-      config = Netrc.read("#{(ENV["HOME"] || "./")}/digitalocean.netrc")
-      client_id = [(print 'Digital Ocean Client ID: '), STDIN.gets.rstrip][1]
-      api_key = [(print 'Digital Ocean API Key: '), STDIN.gets.rstrip][1]
-      if client_id.empty? and api_key.empty?
+      config = Netrc.read("#{(ENV["HOME"] || "./")}/oc.netrc")
+      api_key = [(print 'Access Tokens: '), STDIN.gets.rstrip][1]
+      client_id = "empty"
+      if api_key.empty?
         puts "Please fill all fields".red
       else
-        config["api.digitalocean.com"] = client_id, api_key
+        config["api.digitalocean.com"] = api_key, client_id
         config.save
         puts "Informations is changed".red
       end

@@ -2,12 +2,10 @@ module Oc::Run
   class Images < Base
 
     description "This method returns all the available images that can be accessed by your client ID. You will have access to all public images by default, and any snapshots or backups that you have created in your own account."
-    syntax "co images [FLAG true -> Show my images]"
+    syntax "co images"
     def run(*args)
-      filter = args[0]
-      if filter == "true"
-        result = Oc::Get.get_json("images","my_images")
-        if result["status"] == "ERROR"
+      result = barge.image.all
+        if !result.success?
           puts "Error: Please check your information".red
         else
           puts "Images".yellow
@@ -21,47 +19,18 @@ module Oc::Run
             'Regions'
           ]
 
-          result["images"].each do |images|
+          result.images.each do |image|
             rows << [
-              images["id"],
-              images["name"].red,
-              images["distribution"].red,
-              images["public"] == true ? "True".green : "False".red,
-              images["regions"].join(",").yellow
+              image.id,
+              image.name.to_s.red,
+              image.distribution.to_s.red,
+              image.public.to_s == "true" ? "True".green : "False".red,
+              image.regions.join(",").yellow
             ]
           end
           table = Terminal::Table.new :rows => rows
           puts table
         end
-      else
-        result = Oc::Get.get_json("images")
-        if result["status"] == "ERROR"
-          puts "Error: Please check your information".red
-        else
-          puts "Images".yellow
-          rows = []
-
-          rows << [
-            'ID',
-            'Name',
-            'Distribution',
-            'Public',
-            'Regions'
-          ]
-
-          result["images"].each do |images|
-            rows << [
-              images["id"],
-              images["name"].red,
-              images["distribution"].red,
-              images["public"] == true ? "True".green : "False".red,
-              images["regions"].join(",").yellow
-            ]
-          end
-          table = Terminal::Table.new :rows => rows
-          puts table
-        end
-      end
     end
 
     description "This method displays the attributes of an image."
@@ -74,11 +43,9 @@ module Oc::Run
         puts "$ oc images show [IMAGE_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-
-        url = "https://api.digitalocean.com/images/#{id}/"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.image.show(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Images".yellow
           rows = []
@@ -91,14 +58,14 @@ module Oc::Run
             'Regions'
           ]
 
-          images = result["image"]
+          image = result.image
 
           rows << [
-            images["id"],
-            images["name"].red,
-            images["distribution"].red,
-            images["public"] == true ? "True".green : "False".red,
-            images["regions"].join(",").yellow
+            image.id,
+            image.name.to_s.red,
+            image.distribution.to_s.red,
+            image.public.to_s == "true" ? "True".green : "False".red,
+            image.regions.join(",").yellow
           ]
 
           table = Terminal::Table.new :rows => rows
@@ -120,10 +87,9 @@ module Oc::Run
         puts "$ oc images destroy [IMAGE_ID]".yellow
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/images/#{id}/destroy/"
-        result = Oc::Get.get_json_url(url)
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.image.destroy(id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Image destroyed".green
         end
@@ -142,16 +108,19 @@ module Oc::Run
       else
         raise ArgumentError, "Argument Error - #{id}" unless id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
         raise ArgumentError, "Argument Error - #{id}" unless region_id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        url = "https://api.digitalocean.com/images/#{id}/transfer/"
-        result = Oc::Get.get_json_url(url,{ "region_id" => region_id })
-        if result["status"] == "ERROR"
-          puts "#{result["message"]}".red
+        result = barge.image.transfer(id, region: region_id)
+        if !result.success?
+          puts "#{result.message}".red
         else
           puts "Image transfered".green
         end
       end
     end
 
+    def barge
+      puts "I'm thinking, please wait..".blue
+      Oc::Get.get_barge
+    end
 
   end
 end
