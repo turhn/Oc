@@ -51,10 +51,8 @@ module Oc::Run
         puts "Usage".yellow
         puts "$ oc droplets new [DROPLET_NAME] [SIZE_ID] [IMAGE_ID] [REGION_ID]".yellow
       else
-        raise ArgumentError, "Argument Error - #{size}" unless size =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
-        raise ArgumentError, "Argument Error - #{image_id}" unless image_id =~ /\A[-+]?[0-9]*\.?[0-9]+\Z/
 
-        result = barge.droplet.create({:name => name, :region => region_id, :size => size_id, :image => image_id})
+        result = barge.droplet.create({:name => name, :region => region_id, :size => size, :image => image_id})
         if !result.success?
           puts "#{result.message}".red
         else
