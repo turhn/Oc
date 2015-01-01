@@ -103,10 +103,10 @@ Or install it yourself as:
 ## Information
 <pre>
   Show API Key and Client ID
-  $ co info show
+  $ oc info show
 
   Change Information
-  $ co info change
+  $ oc info change
 </pre>
 
 ## Contributing
